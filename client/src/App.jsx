@@ -4,6 +4,8 @@ import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 function App() {
   return (
@@ -14,6 +16,16 @@ function App() {
         <Route
           path="/cong-thuc/:id"
           element={<RecipeDetailPage />}
+        />
+
+        <Route
+          path="/dang-nhap"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/dang-ky"
+          element={<RegisterPage />}
         />
 
         <Route path="*" element={<NotFoundPage />} />
