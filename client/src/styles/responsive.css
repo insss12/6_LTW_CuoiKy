@@ -1,0 +1,138 @@
+/* =================================
+   10. RESPONSIVE - TABLET
+================================= */
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 18px;
+  }
+
+  .simple-recipe-list,
+  .my-recipes-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-hero,
+  .detail-content {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-hero > img {
+    height: 280px;
+  }
+}
+
+/* =================================
+   11. RESPONSIVE - MOBILE
+================================= */
+
+@media (max-width: 550px) {
+  .simple-home {
+    padding: 0 15px;
+  }
+
+  .simple-intro {
+    padding: 30px 15px;
+  }
+
+  .simple-intro h1 {
+    font-size: 24px;
+  }
+
+  .simple-recipe-list,
+  .my-recipes-list {
+    grid-template-columns: 1fr;
+  }
+
+  .header-container {
+    gap: 12px;
+  }
+
+  .main-nav {
+    gap: 12px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+
+  .header-actions .login-link {
+    font-size: 12px;
+  }
+
+  .header-actions .header-button {
+    display: inline-block;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .detail-intro h1 {
+    font-size: 25px;
+  }
+
+  .detail-hero > img {
+    height: 240px;
+  }
+
+  .my-recipes-page,
+  .recipe-form-page,
+  .detail-page {
+    padding: 15px;
+  }
+
+  .my-recipes-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .my-recipes-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .my-recipes-search input {
+    width: 100%;
+  }
+
+  .recipe-form {
+    padding: 15px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dynamic-form-row {
+    flex-wrap: wrap;
+  }
+
+  .dynamic-form-row .form-group {
+    flex: 1 1 100%;
+  }
+
+  .recipe-form-actions {
+    flex-wrap: wrap;
+  }
+
+  .cancel-button,
+  .save-recipe-button {
+    text-align: center;
+    flex: 1;
+  }
+
+  .auth-form {
+    padding: 22px 17px;
+  }
+}

@@ -1,0 +1,95 @@
+/* =================================
+   4. ĐĂNG NHẬP VÀ ĐĂNG KÝ
+================================= */
+
+.auth-page {
+  min-height: 600px;
+  padding: 45px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 430px;
+  padding: 30px;
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 7px;
+}
+
+.auth-form h1 {
+  text-align: center;
+  color: #c96c3c;
+  font-size: 26px;
+}
+
+.auth-form > p {
+  text-align: center;
+  color: #777777;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.form-group {
+  margin-top: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #444444;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #d8754a;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 22px;
+  color: white;
+  background: #d8754a;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.auth-button:hover {
+  background: #bd6038;
+}
+
+.form-message {
+  margin-top: 15px;
+  padding: 10px;
+  color: #a65332;
+  background: #fff3e9;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auth-link {
+  margin-top: 20px;
+  text-align: center;
+  color: #666666;
+  font-size: 13px;
+}
+
+.auth-link a {
+  color: #d8754a;
+  font-weight: bold;
+}

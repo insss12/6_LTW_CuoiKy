@@ -15,18 +15,30 @@ function SiteHeader() {
         </Link>
 
         <nav className="main-nav">
-          <NavLink to="/" end className={({ isActive }) =>
-            isActive ? "nav-link active" : "nav-link"
-          }>
+
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
             Trang chủ
           </NavLink>
 
-          <Link to="/#cong-thuc" className="nav-link">
-            Công thức
-          </Link>
+          <NavLink
+            to="/cong-thuc-cua-toi"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
+            Công thức của tôi
+          </NavLink>
+
         </nav>
 
         <div className="header-actions">
+
           <Link to="/dang-nhap" className="login-link">
             Đăng nhập
           </Link>
@@ -34,6 +46,7 @@ function SiteHeader() {
           <Link to="/dang-ky" className="header-button">
             Đăng ký
           </Link>
+
         </div>
 
       </div>
