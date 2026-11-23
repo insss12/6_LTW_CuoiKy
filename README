@@ -1,3 +1,4 @@
 1. Những phần mềm cần cài: Node.js, npm, Git, VS Code.
 2. cd đến file client/server và: npm install
 3. truy cập thư mục client "cd client" và "npm run dev" để chạy.
+4. cài mongoDB
