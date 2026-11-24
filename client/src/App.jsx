@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import HomePage from "./pages/HomePage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
@@ -33,20 +34,25 @@ function App() {
           element={<RegisterPage />}
         />
 
-        <Route
-          path="/cong-thuc-cua-toi"
-          element={<MyRecipesPage />}
-        />
+        {/* Các trang dưới đây bắt buộc phải đăng nhập */}
+        <Route element={<ProtectedRoute />}>
 
-        <Route
-          path="/dang-cong-thuc"
-          element={<RecipeFormPage />}
-        />
+          <Route
+            path="/cong-thuc-cua-toi"
+            element={<MyRecipesPage />}
+          />
 
-        <Route
-          path="/sua-cong-thuc/:id"
-          element={<RecipeFormPage />}
-        />
+          <Route
+            path="/dang-cong-thuc"
+            element={<RecipeFormPage />}
+          />
+
+          <Route
+            path="/sua-cong-thuc/:id"
+            element={<RecipeFormPage />}
+          />
+
+        </Route>
 
         <Route path="*" element={<NotFoundPage />} />
 

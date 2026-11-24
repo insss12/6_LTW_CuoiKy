@@ -1,6 +1,16 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+
+import useAuth from "../hooks/useAuth";
 
 function SiteHeader() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/");
+  }
+
   return (
     <header className="site-header">
       <div className="header-container">
@@ -26,26 +36,46 @@ function SiteHeader() {
             Trang chủ
           </NavLink>
 
-          <NavLink
-            to="/cong-thuc-cua-toi"
-            className={({ isActive }) =>
-              isActive ? "nav-link active" : "nav-link"
-            }
-          >
-            Công thức của tôi
-          </NavLink>
+          
+            <NavLink
+              to="/cong-thuc-cua-toi"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              Công thức của tôi
+            </NavLink>
+        
 
         </nav>
 
         <div className="header-actions">
 
-          <Link to="/dang-nhap" className="login-link">
-            Đăng nhập
-          </Link>
+          {user ? (
+            <>
+              <span className="user-name">
+                Xin chào, {user.name}
+              </span>
 
-          <Link to="/dang-ky" className="header-button">
-            Đăng ký
-          </Link>
+              <button
+                type="button"
+                className="header-button"
+                onClick={handleLogout}
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/dang-nhap" className="login-link">
+                Đăng nhập
+              </Link>
+
+              <Link to="/dang-ky" className="header-button">
+                Đăng ký
+              </Link>
+            </>
+          )}
 
         </div>
 

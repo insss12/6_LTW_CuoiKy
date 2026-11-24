@@ -132,3 +132,18 @@
 .site-footer .footer-brand {
   display: none;
 }
+/layout*/
+
+.user-name {
+  color: #444444;
+  font-size: 14px;
+}
+
+button.header-button {
+  cursor: pointer;
+}
+
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
