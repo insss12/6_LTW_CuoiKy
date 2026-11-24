@@ -1,23 +1,51 @@
- 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
+
+import useAuth from "../hooks/useAuth";
+import { getErrorMessage } from "../services/api";
 
 function LoginPage() {
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  // Quay lại trang người dùng định vào trước khi bị chuyển sang đăng nhập
+  const redirectTo = location.state?.from?.pathname || "/";
+
+  // Đã đăng nhập rồi thì không cần ở trang này
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setMessage("Vui lòng nhập đầy đủ thông tin.");
       return;
     }
 
-    setMessage(
-      "Giao diện đã hoàn thành. Chức năng đăng nhập sẽ được kết nối với Server sau."
-    );
+    setSubmitting(true);
+    setMessage("");
+
+    try {
+      await login(email.trim(), password);
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      setMessage(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -34,6 +62,7 @@ function LoginPage() {
             id="email"
             type="email"
             placeholder="Nhập email"
+            autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
@@ -46,13 +75,18 @@ function LoginPage() {
             id="password"
             type="password"
             placeholder="Nhập mật khẩu"
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
         </div>
 
-        <button type="submit" className="auth-button">
-          Đăng nhập
+        <button
+          type="submit"
+          className="auth-button"
+          disabled={submitting}
+        >
+          {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
 
         {message && (
