@@ -2,3 +2,4 @@
 2. cd đến file client/server và: npm install
 3. truy cập thư mục client "cd client" và "npm run dev" để chạy.
 4. cài mongoDB
+5.cd server cài :npm install bcryptjs jsonwebtoken
