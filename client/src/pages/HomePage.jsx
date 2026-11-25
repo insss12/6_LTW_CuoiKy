@@ -1,83 +1,40 @@
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
-import { useState } from "react";
-import recipes from "../data/recipes.js";
+import RecipeCard from "../components/RecipeCard";
+import { recipeRepository } from "../utils/recipeStorage";
+import {
+  ALL_CATEGORIES,
+  RECIPE_CATEGORIES,
+  RecipeFilter
+} from "../utils/recipeHelpers";
+
+const FEATURED_COUNT = 8;
+const CATEGORIES = [ALL_CATEGORIES, ...RECIPE_CATEGORIES];
 
 function HomePage() {
   const [keyword, setKeyword] = useState("");
   const [ingredient, setIngredient] = useState("");
-  const [category, setCategory] = useState("Tất cả");
+  const [category, setCategory] = useState(ALL_CATEGORIES);
 
-  const categories = [
-    "Tất cả",
-    "Món chính",
-    "Món nước",
-    "Món chay",
-    "Ăn sáng",
-    "Món khai vị",
-    "Tráng miệng"
-  ];
+  const allRecipes = useMemo(() => recipeRepository.getAll(), []);
 
-  // Loại bỏ dấu tiếng Việt để tìm kiếm dễ hơn
-  function removeAccents(text) {
-    return text
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d");
-  }
+  const filteredRecipes = useMemo(
+    () =>
+      RecipeFilter.apply(allRecipes, { keyword, ingredient, category }),
+    [allRecipes, keyword, ingredient, category]
+  );
 
-  // Lọc công thức theo tên, nguyên liệu và danh mục
-  const filteredRecipes = recipes
-    .map((recipe) => {
-      const ingredientList = ingredient
-        .split(",")
-        .map((item) => removeAccents(item.trim()))
-        .filter((item) => item !== "");
+  const featuredRecipes = filteredRecipes.slice(0, FEATURED_COUNT);
 
-      const matchedCount = ingredientList.filter((item) =>
-        recipe.ingredients.some((name) =>
-          removeAccents(name).includes(item)
-        )
-      ).length;
-
-      return {
-        ...recipe,
-        matchedCount
-      };
-    })
-    .filter((recipe) => {
-      const recipeName = removeAccents(recipe.title);
-      const searchName = removeAccents(keyword);
-
-      const matchName = recipeName.includes(searchName);
-
-      const matchCategory =
-        category === "Tất cả" ||
-        recipe.category === category;
-
-      const matchIngredient =
-        ingredient.trim() === "" ||
-        recipe.matchedCount > 0;
-
-      return (
-        matchName &&
-        matchCategory &&
-        matchIngredient
-      );
-    })
-    .sort((a, b) => b.matchedCount - a.matchedCount);
-
-  // Xóa các điều kiện tìm kiếm
   function handleReset() {
     setKeyword("");
     setIngredient("");
-    setCategory("Tất cả");
+    setCategory(ALL_CATEGORIES);
   }
 
   return (
     <div className="simple-home">
-
-      {/* PHẦN GIỚI THIỆU */}
       <section className="simple-intro">
         <h1>Sổ tay công thức nấu ăn</h1>
 
@@ -100,141 +57,84 @@ function HomePage() {
         </button>
       </section>
 
-      {/* PHẦN TÌM KIẾM */}
       <section className="simple-search">
-
         <h2>Tìm kiếm món ăn</h2>
 
         <input
           type="text"
           placeholder="Nhập tên món ăn..."
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onChange={(event) => setKeyword(event.target.value)}
         />
 
         <input
           type="text"
           placeholder="Nhập nguyên liệu, ví dụ: thịt gà, trứng..."
           value={ingredient}
-          onChange={(e) => setIngredient(e.target.value)}
+          onChange={(event) => setIngredient(event.target.value)}
         />
 
-        <button
-          type="button"
-          onClick={handleReset}
-        >
+        <button type="button" onClick={handleReset}>
           Xóa tìm kiếm
         </button>
-
       </section>
 
-      {/* PHẦN DANH MỤC */}
       <section className="simple-category">
-
         <h2>Danh mục món ăn</h2>
 
         <div className="simple-category-list">
-
-          {categories.map((item) => (
+          {CATEGORIES.map((item) => (
             <button
               key={item}
               type="button"
-              className={
-                category === item ? "selected" : ""
-              }
+              className={category === item ? "selected" : ""}
               onClick={() => setCategory(item)}
             >
               {item}
             </button>
           ))}
-
         </div>
-
       </section>
 
-      {/* DANH SÁCH CÔNG THỨC */}
-      <section
-        className="simple-recipes"
-        id="cong-thuc"
-      >
+      <section className="simple-recipes" id="cong-thuc">
+        <div className="section-title-row">
+          <h2>Món ngon nổi bật</h2>
 
-        <h2>Các công thức nấu ăn</h2>
+          <Link to="/cong-dong" className="section-title-link">
+            Xem tất cả công thức cộng đồng →
+          </Link>
+        </div>
 
         <p>
-          Hiện có {filteredRecipes.length} công thức.
+          Hiển thị {featuredRecipes.length} / {filteredRecipes.length} công thức.
         </p>
 
-        {recipes.length === 0 ? (
-
-          <div className="simple-empty">
-            <h3>Chưa có công thức nấu ăn</h3>
-
-            <p>
-              Các công thức sẽ được cập nhật trong thời gian tới.
-            </p>
-          </div>
-
-        ) : filteredRecipes.length === 0 ? (
-
+        {filteredRecipes.length === 0 ? (
           <div className="simple-empty">
             <h3>Không tìm thấy món ăn</h3>
 
-            <p>
-              Hãy thử tìm kiếm bằng tên món hoặc nguyên liệu khác.
-            </p>
+            <p>Hãy thử tìm kiếm bằng tên món hoặc nguyên liệu khác.</p>
 
-            <button
-              type="button"
-              onClick={handleReset}
-            >
+            <button type="button" onClick={handleReset}>
               Xóa bộ lọc
             </button>
           </div>
-
         ) : (
-
           <div className="simple-recipe-list">
-
-            {filteredRecipes.map((recipe) => (
-
-              <article
-                className="simple-recipe-card"
-                key={recipe.id}
-              >
-
-                <img
-                  src={recipe.image}
-                  alt={recipe.title}
-                />
-
-                <div className="simple-recipe-info">
-
-                  <span>{recipe.category}</span>
-
-                  <h3>{recipe.title}</h3>
-
-                  <p>{recipe.description}</p>
-
-                  <p>
-                    Thời gian: {recipe.time} phút
-                  </p>
-
-                  <a href={`/cong-thuc/${recipe.id}`}>
-                    Xem công thức
-                  </a>
-
-                </div>
-
-              </article>
-
+            {featuredRecipes.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
             ))}
-
           </div>
-
         )}
 
+        {filteredRecipes.length > FEATURED_COUNT && (
+          <div className="load-more-wrap">
+            <Link to="/cong-dong" className="load-more-button">
+              Xem thêm {filteredRecipes.length - FEATURED_COUNT} công thức
+            </Link>
+          </div>
+        )}
       </section>
-
     </div>
   );
 }

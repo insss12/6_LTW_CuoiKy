@@ -1,18 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  getMyRecipes,
-  saveMyRecipes
-} from "../utils/recipeStorage";
+import { recipeRepository } from "../utils/recipeStorage";
 
 function MyRecipesPage() {
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(() => recipeRepository.getMine());
   const [keyword, setKeyword] = useState("");
-
-  useEffect(() => {
-    setRecipes(getMyRecipes());
-  }, []);
 
   function handleDelete(id) {
     const confirmed = window.confirm(
@@ -23,33 +16,25 @@ function MyRecipesPage() {
       return;
     }
 
-    const updatedRecipes = recipes.filter(
-      (recipe) => recipe.id !== id
-    );
+    const updatedRecipes = recipes.filter((recipe) => recipe.id !== id);
 
-    saveMyRecipes(updatedRecipes);
+    recipeRepository.saveMine(updatedRecipes);
     setRecipes(updatedRecipes);
   }
 
   const filteredRecipes = recipes.filter((recipe) =>
-    recipe.title.toLowerCase().includes(
-      keyword.toLowerCase()
-    )
+    recipe.title.toLowerCase().includes(keyword.toLowerCase())
   );
 
   return (
     <div className="my-recipes-page">
-
       <div className="my-recipes-header">
         <div>
           <h1>Công thức của tôi</h1>
-          <p>Quản lý các công thức nấu ăn bạn đã đăng.</p>
+          <p>Xem lại và quản lý các công thức nấu ăn bạn đã đăng.</p>
         </div>
 
-        <Link
-          to="/dang-cong-thuc"
-          className="my-recipes-add"
-        >
+        <Link to="/dang-cong-thuc" className="my-recipes-add">
           + Đăng công thức
         </Link>
       </div>
@@ -59,18 +44,13 @@ function MyRecipesPage() {
           type="text"
           placeholder="Tìm công thức của bạn..."
           value={keyword}
-          onChange={(event) =>
-            setKeyword(event.target.value)
-          }
+          onChange={(event) => setKeyword(event.target.value)}
         />
 
-        <span>
-          {filteredRecipes.length} công thức
-        </span>
+        <span>{filteredRecipes.length} công thức</span>
       </div>
 
       {filteredRecipes.length === 0 ? (
-
         <div className="my-recipes-empty">
           <div className="empty-icon">🍳</div>
 
@@ -87,62 +67,45 @@ function MyRecipesPage() {
           </p>
 
           {recipes.length === 0 && (
-            <Link
-              to="/dang-cong-thuc"
-              className="my-recipes-add"
-            >
+            <Link to="/dang-cong-thuc" className="my-recipes-add">
               Đăng công thức đầu tiên
             </Link>
           )}
         </div>
-
       ) : (
-
         <div className="my-recipes-list">
-
           {filteredRecipes.map((recipe) => (
-
-            <article
-              className="my-recipe-card"
-              key={recipe.id}
-            >
-
-              {recipe.image ? (
-                <img
-                  src={recipe.image}
-                  alt={recipe.title}
-                />
-              ) : (
-                <div className="my-recipe-no-image">
-                  Chưa có ảnh
-                </div>
-              )}
+            <article className="my-recipe-card" key={recipe.id}>
+              <Link to={`/cong-thuc/${recipe.id}`}>
+                {recipe.image ? (
+                  <img src={recipe.image} alt={recipe.title} />
+                ) : (
+                  <div className="my-recipe-no-image">Chưa có ảnh</div>
+                )}
+              </Link>
 
               <div className="my-recipe-info">
-
                 <span className="my-recipe-category">
                   {recipe.category}
                 </span>
 
-                <h3>{recipe.title}</h3>
+                <h3>
+                  <Link to={`/cong-thuc/${recipe.id}`}>
+                    {recipe.title}
+                  </Link>
+                </h3>
 
                 <p>{recipe.description}</p>
 
-                <p>
-                  Thời gian: {recipe.time} phút
-                </p>
-
-                <span
-                  className={`recipe-status ${recipe.status}`}
-                >
-                  {recipe.status === "approved"
-                    ? "Đã duyệt"
-                    : recipe.status === "rejected"
-                    ? "Bị từ chối"
-                    : "Chờ duyệt"}
-                </span>
+                <p>Thời gian: {recipe.time} phút</p>
 
                 <div className="my-recipe-actions">
+                  <Link
+                    to={`/cong-thuc/${recipe.id}`}
+                    className="view-button"
+                  >
+                    Xem
+                  </Link>
 
                   <Link
                     to={`/sua-cong-thuc/${recipe.id}`}
@@ -158,19 +121,12 @@ function MyRecipesPage() {
                   >
                     Xóa
                   </button>
-
                 </div>
-
               </div>
-
             </article>
-
           ))}
-
         </div>
-
       )}
-
     </div>
   );
 }

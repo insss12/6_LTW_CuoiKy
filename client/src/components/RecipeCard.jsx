@@ -1,62 +1,59 @@
 import { Link } from "react-router-dom";
 
-function RecipeCard({ recipe }) {
-  return (
-    <article className="recipe-card">
+import FavoriteButton from "./FavoriteButton";
+import RecipeImage from "./RecipeImage";
 
-      <Link
-        to={`/cong-thuc/${recipe.id}`}
-        className="recipe-image-link"
-      >
-        <img
-          src={recipe.image}
-          alt={recipe.title}
-          className="recipe-image"
-          loading="lazy"
-        />
+import useRecipeViews from "../hooks/useRecipeViews";
 
-        <span className="recipe-time">
-          ◷ {recipe.time} phút
-        </span>
-      </Link>
+function RecipeCard({ recipe, onFavoriteChange }) {
+    const {
+        views
+    } = useRecipeViews(recipe.id);
 
-      <div className="recipe-card-content">
+    return (
+        <article className="simple-recipe-card">
 
-        <span className="recipe-category">
-          {recipe.category}
-        </span>
+            <div className="recipe-image-wrap">
 
-        <Link to={`/cong-thuc/${recipe.id}`}>
-          <h3>{recipe.title}</h3>
-        </Link>
+                <Link to={`/cong-thuc/${recipe.id}`}>
+                    <RecipeImage recipe={recipe} />
+                </Link>
 
-        <p className="recipe-description">
-          {recipe.description}
-        </p>
+                <FavoriteButton
+                    recipeId={recipe.id}
+                    variant="card"
+                    onToggle={onFavoriteChange}
+                />
 
-        <div className="recipe-card-meta">
+            </div>
 
-          <span className="rating">
-            ★ {recipe.rating}
-          </span>
+            <div className="simple-recipe-info">
 
-          <span className="review-count">
-            ({recipe.reviewCount})
-          </span>
+                <span>{recipe.category}</span>
 
-          <span className="recipe-difficulty">
-            {recipe.difficulty}
-          </span>
+                <h3>{recipe.title}</h3>
 
-        </div>
+                <p>{recipe.description}</p>
 
-        <div className="recipe-author">
-          Bởi {recipe.author}
-        </div>
+                <p>
+                    Thời gian: {recipe.time} phút ·{" "}
+                    {recipe.difficulty}
+                </p>
 
-      </div>
-    </article>
-  );
+                <p className="recipe-stats">
+                    👁 {views.toLocaleString("vi-VN")} lượt xem
+                </p>
+
+                <p>Bởi {recipe.author}</p>
+
+                <Link to={`/cong-thuc/${recipe.id}`}>
+                    Xem công thức
+                </Link>
+
+            </div>
+
+        </article>
+    );
 }
 
 export default RecipeCard;

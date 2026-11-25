@@ -1,414 +1,66 @@
-/* =================================
-   5. CÔNG THỨC CỦA TÔI
-================================= */
 
-.my-recipes-page {
-  width: 100%;
-  max-width: 1100px;
-  min-height: 600px;
-  margin: 30px auto;
-  padding: 20px;
-  color: #333333;
+/* Nút yêu thích và số lượt tim */
+.favorite-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #c0392b;
+    background: #ffffff;
+    border: 1px solid #e3c3bd;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
-.my-recipes-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
+.favorite-button.card {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    min-width: 48px;
+    height: 36px;
+    padding: 0 9px;
+    font-size: 18px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.my-recipes-header h1 {
-  color: #c96c3c;
-  font-size: 27px;
+.favorite-button.detail {
+    padding: 9px 16px;
+    font-size: 14px;
 }
 
-.my-recipes-header p {
-  color: #777777;
-  font-size: 14px;
+.favorite-button:hover {
+    background: #fff1ee;
+    transform: translateY(-1px);
 }
 
-.my-recipes-add {
-  display: inline-block;
-  padding: 11px 16px;
-  color: white;
-  background: #d8754a;
-  border: none;
-  border-radius: 5px;
-  font-size: 13px;
+.favorite-button.active {
+    color: #ffffff;
+    background: #c0392b;
+    border-color: #c0392b;
 }
 
-.my-recipes-add:hover {
-  background: #bd6038;
+.favorite-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
 }
 
-/* Tìm công thức cá nhân */
-
-.my-recipes-search {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  margin: 25px 0;
+.favorite-heart {
+    font-size: 20px;
+    line-height: 1;
 }
 
-.my-recipes-search input {
-  width: 75%;
-  padding: 12px;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  font-size: 14px;
+.favorite-count {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
 }
 
-.my-recipes-search span {
-  color: #777777;
-  font-size: 13px;
+.favorite-button.detail .favorite-count {
+    font-size: 13px;
 }
 
-/* Danh sách công thức */
-
-.my-recipes-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-}
-
-.my-recipe-card {
-  overflow: hidden;
-  background: white;
-  border: 1px solid #dddddd;
-  border-radius: 7px;
-}
-
-.my-recipe-card img,
-.my-recipe-no-image {
-  display: block;
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-
-.my-recipe-no-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #888888;
-  background: #f3f0e9;
-  font-size: 14px;
-}
-
-.my-recipe-info {
-  padding: 15px;
-}
-
-.my-recipe-category {
-  color: #d8754a;
-  font-size: 12px;
-}
-
-.my-recipe-info h3 {
-  margin: 10px 0;
-  color: #333333;
-  font-size: 18px;
-}
-
-.my-recipe-info p {
-  color: #777777;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Trạng thái công thức */
-
-.recipe-status {
-  display: inline-block;
-  margin: 5px 0 12px;
-  padding: 6px 9px;
-  color: #777777;
-  background: #f1eee8;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-.recipe-status.approved {
-  color: #3c783c;
-  background: #e5f2e5;
-}
-
-.recipe-status.rejected {
-  color: #b54b3d;
-  background: #fce9e6;
-}
-
-.recipe-status.pending {
-  color: #a36b19;
-  background: #fff3df;
-}
-
-/* Nút sửa và xóa */
-
-.my-recipe-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.edit-button,
-.delete-button {
-  flex: 1;
-  padding: 9px;
-  text-align: center;
-  border-radius: 5px;
-  font-size: 13px;
-}
-
-.edit-button {
-  color: white;
-  background: #6e8a68;
-}
-
-.delete-button {
-  color: #b54b3d;
-  background: white;
-  border: 1px solid #d9b1a9;
-}
-
-.delete-button:hover {
-  background: #fff1ee;
-}
-
-/* Trạng thái chưa có công thức */
-
-.my-recipes-empty {
-  margin-top: 30px;
-  padding: 50px 20px;
-  text-align: center;
-  background: #fff9f4;
-  border: 1px dashed #e4cbb9;
-  border-radius: 7px;
-}
-
-.my-recipes-empty h3 {
-  color: #555555;
-}
-
-.my-recipes-empty p {
-  color: #888888;
-  font-size: 14px;
-}
-
-.my-recipes-empty .empty-icon {
-  margin-bottom: 10px;
-  font-size: 40px;
-}
-
-/* =================================
-   6. FORM ĐĂNG VÀ SỬA CÔNG THỨC
-================================= */
-
-.recipe-form-page {
-  width: 100%;
-  max-width: 850px;
-  margin: 35px auto;
-  padding: 20px;
-  color: #333333;
-}
-
-.recipe-form-header {
-  margin-bottom: 25px;
-}
-
-.recipe-form-header > a {
-  color: #d8754a;
-  font-size: 13px;
-}
-
-.recipe-form-header h1 {
-  color: #c96c3c;
-  font-size: 27px;
-}
-
-.recipe-form-header p {
-  color: #777777;
-  font-size: 14px;
-}
-
-.recipe-form {
-  width: 100%;
-  padding: 25px;
-  background: white;
-  border: 1px solid #dddddd;
-  border-radius: 7px;
-}
-
-.recipe-form h2 {
-  margin-top: 30px;
-  padding-bottom: 10px;
-  color: #c96c3c;
-  border-bottom: 1px solid #eeeeee;
-  font-size: 19px;
-}
-
-.recipe-form h2:first-child {
-  margin-top: 0;
-}
-
-.recipe-form .form-group {
-  margin-top: 17px;
-}
-
-.recipe-form .form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #444444;
-  font-size: 14px;
-  font-weight: normal;
-}
-
-.recipe-form .form-group small {
-  display: block;
-  margin-top: 7px;
-  color: #888888;
-  font-size: 11px;
-}
-
-.recipe-form input,
-.recipe-form textarea,
-.recipe-form select {
-  width: 100%;
-  padding: 11px;
-  background: white;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-.recipe-form textarea {
-  resize: vertical;
-}
-
-.recipe-form input:focus,
-.recipe-form textarea:focus,
-.recipe-form select:focus {
-  outline: none;
-  border-color: #d8754a;
-}
-
-/* Các trường thông tin */
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px;
-}
-
-.recipe-form-note {
-  color: #888888;
-  font-size: 13px;
-}
-
-/* Các dòng nguyên liệu */
-
-.dynamic-form-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.dynamic-form-row .form-group {
-  flex: 1;
-  min-width: 0;
-}
-
-.remove-row-button {
-  padding: 11px;
-  margin-bottom: 0;
-  color: #b54b3d;
-  background: white;
-  border: 1px solid #d9b1a9;
-  border-radius: 5px;
-}
-
-.remove-row-button:hover {
-  background: #fff1ee;
-}
-
-/* Nút thêm nguyên liệu và bước */
-
-.add-row-button {
-  margin: 10px 0 15px;
-  padding: 10px 15px;
-  color: #d8754a;
-  background: white;
-  border: 1px solid #d8754a;
-  border-radius: 5px;
-}
-
-.add-row-button:hover {
-  background: #fff3e9;
-}
-
-/* Các bước nấu */
-
-.step-form-row {
-  margin: 15px 0;
-  padding: 15px;
-  background: #fafafa;
-  border: 1px solid #eeeeee;
-  border-radius: 5px;
-}
-
-.step-form-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  color: #555555;
-  font-size: 14px;
-}
-
-.step-form-heading button {
-  color: #b54b3d;
-  background: transparent;
-  border: none;
-  font-size: 13px;
-}
-
-.step-form-row textarea {
-  width: 100%;
-}
-
-/* Nút lưu và hủy */
-
-.recipe-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 12px;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #eeeeee;
-}
-
-.cancel-button {
-  padding: 11px 18px;
-  color: #555555;
-  background: white;
-  border: 1px solid #cccccc;
-  border-radius: 5px;
-  font-size: 13px;
-}
-
-.save-recipe-button {
-  padding: 11px 18px;
-  color: white;
-  background: #d8754a;
-  border: none;
-  border-radius: 5px;
-  font-size: 13px;
-}
-
-.save-recipe-button:hover {
-  background: #bd6038;
+.detail-actions {
+    margin-top: 15px;
 }

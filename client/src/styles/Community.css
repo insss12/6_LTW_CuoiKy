@@ -1,0 +1,297 @@
+.recipe-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 180px;
+  background: #fff3e9;
+  font-size: 56px;
+}
+
+.section-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.section-title-link {
+  color: #d8754a;
+  font-size: 14px;
+}
+
+.section-title-link:hover {
+  text-decoration: underline;
+}
+
+.load-more-wrap {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.load-more-button {
+  display: inline-block;
+  padding: 11px 22px;
+  color: #d8754a;
+  background: white;
+  border: 1px solid #d8754a;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.load-more-button:hover {
+  background: #fff3e9;
+}
+
+.my-recipe-card > a {
+  display: block;
+}
+
+.my-recipe-info h3 a:hover {
+  color: #d8754a;
+}
+
+.view-button {
+  flex: 1;
+  padding: 9px;
+  color: #d8754a;
+  background: white;
+  border: 1px solid #d8754a;
+  border-radius: 5px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.view-button:hover {
+  background: #fff3e9;
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.image-preview img {
+  width: 100%;
+  max-width: 320px;
+  height: 200px;
+  object-fit: cover;
+  border: 1px solid #dddddd;
+  border-radius: 7px;
+}
+
+.recipe-form input[type="file"] {
+  padding: 8px;
+  background: #fafafa;
+  border-style: dashed;
+}
+
+.back-link {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.detail-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 350px;
+  background: #fff3e9;
+  border-radius: 7px;
+  font-size: 90px;
+}
+
+@media (max-width: 768px) {
+  .detail-placeholder {
+    height: 280px;
+  }
+}
+
+.recipe-image-wrap {
+  position: relative;
+}
+
+.recipe-image-wrap > a {
+  display: block;
+}
+
+.recipe-stats {
+  color: #777777;
+}
+
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #c0392b;
+  background: white;
+  border: 1px solid #e3c3bd;
+  border-radius: 20px;
+  line-height: 1;
+}
+
+.favorite-button.card {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.favorite-button.detail {
+  padding: 9px 16px;
+  font-size: 14px;
+}
+
+.favorite-button:hover {
+  background: #fff1ee;
+}
+
+.favorite-button.active {
+  color: white;
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+.detail-actions {
+  margin-top: 15px;
+}
+
+.detail-rating {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.detail-rating span:last-child {
+  color: #999999;
+}
+
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star-rating .star {
+  padding: 0;
+  color: #d9d2c7;
+  background: none;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.star-rating .star.on {
+  color: #d89b3d;
+}
+
+.star-rating.input .star {
+  font-size: 28px;
+}
+
+.review-section {
+  margin-top: 40px;
+  padding-top: 25px;
+  border-top: 1px solid #eeeeee;
+}
+
+.review-section h2 {
+  color: #444444;
+  font-size: 21px;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: #fafafa;
+  border: 1px solid #eeeeee;
+  border-radius: 7px;
+}
+
+.review-form label {
+  color: #555555;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.review-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.review-form textarea:focus {
+  outline: none;
+  border-color: #d8754a;
+}
+
+.review-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.review-delete {
+  flex: none;
+  padding: 9px 16px;
+}
+
+.review-login-note,
+.review-empty {
+  color: #777777;
+  font-size: 14px;
+}
+
+.review-login-note a {
+  color: #d8754a;
+  text-decoration: underline;
+}
+
+.review-list {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.review-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-item-head small {
+  color: #999999;
+}
+
+.review-mine {
+  padding: 2px 8px;
+  color: #3c783c;
+  background: #e5f2e5;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.review-item p {
+  margin: 8px 0 0;
+  color: #555555;
+  font-size: 14px;
+  line-height: 1.6;
+}

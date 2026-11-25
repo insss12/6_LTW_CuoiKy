@@ -36,16 +36,41 @@ function SiteHeader() {
             Trang chủ
           </NavLink>
 
-          
+          <NavLink
+            to="/cong-dong"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
+            Công thức cộng đồng
+          </NavLink>
+
+          <NavLink
+            to="/yeu-thich"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
+            Yêu thích
+          </NavLink>
+
+          <NavLink
+            to="/cong-thuc-cua-toi"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
+            Công thức của tôi
+          </NavLink>
+
+          {user?.role === "admin" && (
             <NavLink
-              to="/cong-thuc-cua-toi"
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
+              to="/quan-tri/binh-luan"
+              className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
             >
-              Công thức của tôi
+              Kiểm duyệt bình luận
             </NavLink>
-        
+          )}
 
         </nav>
 
