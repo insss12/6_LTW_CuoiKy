@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import useAuth from "../hooks/useAuth";
-import { recipeRepository } from "../utils/recipeStorage";
-import { imageProcessor } from "../utils/imageProcessor";
-import { RECIPE_CATEGORIES } from "../utils/recipeHelpers";
+import useCategories from "../hooks/useCategories";
+import { ApiError, getErrorMessage } from "../services/api";
+import {
+  createRecipe,
+  fetchRecipe,
+  updateRecipe
+} from "../services/recipeApi";
 
 const initialForm = {
   title: "",
@@ -34,99 +38,82 @@ const initialForm = {
 function RecipeFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const fileInputRef = useRef(null);
+  const { token, loading: authLoading } = useAuth();
+  const { categories } = useCategories();
 
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
-  const [imageError, setImageError] = useState("");
-  const [processingImage, setProcessingImage] = useState(false);
+  const [loadingRecipe, setLoadingRecipe] = useState(Boolean(id));
+  const [submitting, setSubmitting] = useState(false);
 
   const isEditing = Boolean(id);
 
+  // Sửa công thức: lấy dữ liệu hiện tại từ server (server kiểm tra quyền sở hữu)
   useEffect(() => {
-    if (!id) {
+    if (!id || authLoading) {
       return;
     }
 
-    const recipe = recipeRepository.findMine(id);
+    let active = true;
 
-    if (!recipe) {
-      setNotFound(true);
-      return;
+    async function loadRecipe() {
+      setLoadingRecipe(true);
+
+      try {
+        const recipe = await fetchRecipe(id, token);
+
+        if (!active) {
+          return;
+        }
+
+        setForm({
+          title: recipe.title,
+          description: recipe.description || "",
+          category: recipe.categoryId,
+          image: recipe.image || "",
+          prepTime: String(recipe.prepTime ?? 0),
+          cookingTime: String(recipe.cookingTime ?? 0),
+          difficulty: recipe.difficulty,
+          servings: String(recipe.servings),
+          ingredients: recipe.ingredients?.length
+            ? recipe.ingredients.map((item) => ({
+                name: item.name || "",
+                quantity:
+                  item.quantity === null || item.quantity === undefined
+                    ? ""
+                    : String(item.quantity),
+                unit: item.unit || ""
+              }))
+            : initialForm.ingredients,
+          steps: recipe.steps?.length
+            ? recipe.steps.map((item) => ({
+                instruction: item.instruction || ""
+              }))
+            : initialForm.steps
+        });
+      } catch (requestError) {
+        if (active) {
+          if (requestError instanceof ApiError && requestError.status !== 404) {
+            setMessage(getErrorMessage(requestError));
+          } else {
+            setNotFound(true);
+          }
+        }
+      } finally {
+        if (active) {
+          setLoadingRecipe(false);
+        }
+      }
     }
 
-    setForm({
-      title: recipe.title,
-      description: recipe.description,
-      category: recipe.category,
-      image: recipe.image || "",
-      prepTime: String(recipe.prepTime ?? 10),
-      cookingTime: String(recipe.cookingTime ?? 20),
-      difficulty: recipe.difficulty,
-      servings: String(recipe.servings),
-      ingredients: recipe.ingredients?.length
-        ? recipe.ingredients.map((item) => ({
-            name: item.name || "",
-            quantity: item.quantity || "",
-            unit: item.unit || ""
-          }))
-        : initialForm.ingredients,
-      steps: recipe.steps?.length
-        ? recipe.steps.map((item) => ({
-            instruction: item.instruction || ""
-          }))
-        : initialForm.steps
-    });
-  }, [id]);
+    loadRecipe();
 
-  async function handleImageChange(event) {
-    const input = event.target;
-    const file = input.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    const error = imageProcessor.validate(file);
-
-    if (error) {
-      setImageError(error);
-      input.value = "";
-      return;
-    }
-
-    setImageError("");
-    setProcessingImage(true);
-
-    try {
-      const dataUrl = await imageProcessor.toDataUrl(file);
-
-      setForm((previous) => ({
-        ...previous,
-        image: dataUrl
-      }));
-    } catch (processError) {
-      setImageError(processError.message);
-    } finally {
-      setProcessingImage(false);
-      input.value = "";
-    }
-  }
-
-  function handleRemoveImage() {
-    setForm((previous) => ({
-      ...previous,
-      image: ""
-    }));
-
-    setImageError("");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
+    return () => {
+      active = false;
+    };
+  }, [id, token, authLoading]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -137,7 +124,46 @@ function RecipeFormPage() {
     }));
   }
 
-  function addIngredient() {
+  // Lỗi của một trường (từ kiểm tra ở client hoặc do server trả về)
+  const errorOf = (field) => fieldErrors[field] || "";
+
+  const showError = (field) =>
+    errorOf(field) ? (
+      <p className="form-message" role="alert">{errorOf(field)}</p>
+    ) : null;
+
+  // Kiểm tra nhanh ở client để báo lỗi ngay; server vẫn kiểm tra lại đầy đủ
+  function validateForm() {
+    const errors = {};
+
+    if (form.title.trim().length < 3) {
+      errors.title = "Tên món phải có ít nhất 3 ký tự.";
+    }
+
+    if (!form.category) {
+      errors.category = "Vui lòng chọn danh mục.";
+    }
+
+    if (form.image.trim() && !/^https?:\/\/\S+$/.test(form.image.trim())) {
+      errors.image = "Ảnh phải là đường dẫn bắt đầu bằng http:// hoặc https://.";
+    }
+
+    if (Number(form.prepTime) + Number(form.cookingTime) < 1) {
+      errors.cookingTime = "Tổng thời gian chuẩn bị và nấu phải lớn hơn 0.";
+    }
+
+    if (!form.ingredients.some((item) => item.name.trim() !== "")) {
+      errors.ingredients = "Vui lòng nhập ít nhất một nguyên liệu.";
+    }
+
+    if (!form.steps.some((step) => step.instruction.trim() !== "")) {
+      errors.steps = "Vui lòng nhập ít nhất một bước nấu.";
+    }
+
+    return errors;
+  }
+
+function addIngredient() {
     setForm((previous) => ({
       ...previous,
       ingredients: [
@@ -201,87 +227,67 @@ function RecipeFormPage() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
 
-    const validIngredients = form.ingredients.filter(
-      (item) => item.name.trim() !== ""
-    );
+    const errors = validateForm();
+    setFieldErrors(errors);
 
-    const validSteps = form.steps.filter(
-      (step) => step.instruction.trim() !== ""
-    );
-
-    if (validIngredients.length === 0) {
-      setMessage("Vui lòng nhập ít nhất một nguyên liệu.");
+    if (Object.keys(errors).length > 0) {
+      setMessage("Vui lòng kiểm tra lại các trường báo lỗi.");
       return;
     }
 
-    if (validSteps.length === 0) {
-      setMessage("Vui lòng nhập ít nhất một bước nấu.");
-      return;
-    }
-
-    const oldRecipes = recipeRepository.getMine();
-
-    const oldRecipe = oldRecipes.find(
-      (item) => item.id === id
-    );
-
-    const now = new Date().toISOString();
-
-    const recipeData = {
-      id: id || Date.now().toString(),
-
+    const payload = {
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category,
-      image: form.image,
-
+      image: form.image.trim(),
       prepTime: Number(form.prepTime),
       cookingTime: Number(form.cookingTime),
-
-      time:
-        Number(form.prepTime) +
-        Number(form.cookingTime),
-
       difficulty: form.difficulty,
       servings: Number(form.servings),
 
-      ingredients: validIngredients,
+      ingredients: form.ingredients
+        .filter((item) => item.name.trim() !== "")
+        .map((item) => ({
+          name: item.name.trim(),
+          quantity: item.quantity.trim(),
+          unit: item.unit.trim()
+        })),
 
-      steps: validSteps.map((step, index) => ({
-        stepNumber: index + 1,
-        instruction: step.instruction.trim()
-      })),
-
-      author: user?.name || oldRecipe?.author || "Tài khoản của tôi",
-
-      createdAt: oldRecipe?.createdAt || now,
-      updatedAt: now
+      steps: form.steps
+        .filter((step) => step.instruction.trim() !== "")
+        .map((step) => ({ instruction: step.instruction.trim() }))
     };
 
-    let updatedRecipes;
+    setSubmitting(true);
 
-    if (isEditing) {
-      updatedRecipes = oldRecipes.map((item) =>
-        item.id === id ? recipeData : item
-      );
-    } else {
-      updatedRecipes = [...oldRecipes, recipeData];
+    try {
+      const result = isEditing
+        ? await updateRecipe(token, id, payload)
+        : await createRecipe(token, payload);
+
+      navigate("/cong-thuc-cua-toi", {
+        state: { message: result.message }
+      });
+    } catch (requestError) {
+      // Gắn lỗi do server trả về vào đúng trường
+      if (requestError instanceof ApiError && Array.isArray(requestError.details)) {
+        const serverErrors = {};
+
+        requestError.details.forEach(({ field, message: text }) => {
+          serverErrors[field] = text;
+        });
+
+        setFieldErrors(serverErrors);
+      }
+
+      setMessage(getErrorMessage(requestError));
+    } finally {
+      setSubmitting(false);
     }
-
-    const saved = recipeRepository.saveMine(updatedRecipes);
-
-    if (!saved) {
-      setMessage(
-        "Không lưu được vì bộ nhớ trình duyệt đã đầy. Hãy chọn ảnh nhỏ hơn hoặc xóa bớt công thức cũ."
-      );
-      return;
-    }
-
-    navigate("/cong-thuc-cua-toi");
   }
 
   if (notFound) {
@@ -291,6 +297,14 @@ function RecipeFormPage() {
         <Link to="/cong-thuc-cua-toi">
           Quay lại công thức của tôi
         </Link>
+      </div>
+    );
+  }
+
+  if (loadingRecipe) {
+    return (
+      <div className="recipe-form-page">
+        <p>Đang tải công thức...</p>
       </div>
     );
   }
@@ -331,9 +345,10 @@ function RecipeFormPage() {
             value={form.title}
             onChange={handleChange}
             placeholder="Ví dụ: Gà kho gừng"
-            maxLength={100}
-            required
+            maxLength={120}
           />
+
+          {showError("title")}
         </div>
 
         <div className="form-group">
@@ -350,40 +365,27 @@ function RecipeFormPage() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="image">Ảnh món ăn</label>
+          <label htmlFor="image">Đường dẫn ảnh món ăn</label>
 
           <input
             id="image"
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleImageChange}
-            disabled={processingImage}
+            name="image"
+            type="url"
+            value={form.image}
+            onChange={handleChange}
+            placeholder="https://..."
+            maxLength={500}
           />
 
           <small>
-            Chọn ảnh JPG, PNG hoặc WEBP từ máy, tối đa 5MB.
+            Dán đường dẫn ảnh (http/https). Tải ảnh từ máy lên sẽ bổ sung ở bước upload.
           </small>
 
-          {processingImage && (
-            <small>Đang xử lý ảnh...</small>
-          )}
+          {showError("image")}
 
-          {imageError && (
-            <p className="form-message">{imageError}</p>
-          )}
-
-          {form.image && (
+          {form.image.trim() && !errorOf("image") && (
             <div className="image-preview">
-              <img src={form.image} alt="Ảnh xem trước món ăn" />
-
-              <button
-                type="button"
-                className="remove-row-button"
-                onClick={handleRemoveImage}
-              >
-                Xóa ảnh
-              </button>
+              <img src={form.image.trim()} alt="Ảnh xem trước món ăn" />
             </div>
           )}
         </div>
@@ -398,16 +400,17 @@ function RecipeFormPage() {
               name="category"
               value={form.category}
               onChange={handleChange}
-              required
             >
               <option value="">Chọn danh mục</option>
 
-              {RECIPE_CATEGORIES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {categories.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
                 </option>
               ))}
             </select>
+
+            {showError("category")}
           </div>
 
           <div className="form-group">
@@ -453,6 +456,8 @@ function RecipeFormPage() {
               value={form.cookingTime}
               onChange={handleChange}
             />
+
+            {showError("cookingTime")}
           </div>
 
           <div className="form-group">
@@ -530,9 +535,14 @@ function RecipeFormPage() {
               Xóa
             </button>
 
+            {[`ingredients[${index}].name`, `ingredients[${index}].quantity`, `ingredients[${index}].unit`]
+              .map((field) => showError(field))}
+
           </div>
 
         ))}
+
+        {showError("ingredients")}
 
         <button
           type="button"
@@ -575,9 +585,13 @@ function RecipeFormPage() {
               placeholder="Mô tả bước thực hiện..."
             />
 
+            {showError(`steps[${index}]`)}
+
           </div>
 
         ))}
+
+        {showError("steps")}
 
         <button
           type="button"
@@ -605,9 +619,13 @@ function RecipeFormPage() {
           <button
             type="submit"
             className="save-recipe-button"
-            disabled={processingImage}
+            disabled={submitting || loadingRecipe}
           >
-            {isEditing ? "Lưu thay đổi" : "Đăng công thức"}
+            {submitting
+              ? "Đang lưu..."
+              : isEditing
+                ? "Lưu thay đổi"
+                : "Đăng công thức"}
           </button>
 
         </div>

@@ -1,36 +1,28 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import RecipeCard from "../components/RecipeCard";
-import { recipeRepository } from "../utils/recipeStorage";
-import {
-  ALL_CATEGORIES,
-  RECIPE_CATEGORIES,
-  RecipeFilter
-} from "../utils/recipeHelpers";
+import useCategories from "../hooks/useCategories";
+import useDebounce from "../hooks/useDebounce";
+import useRecipeList from "../hooks/useRecipeList";
 
 const FEATURED_COUNT = 8;
-const CATEGORIES = [ALL_CATEGORIES, ...RECIPE_CATEGORIES];
 
 function HomePage() {
   const [keyword, setKeyword] = useState("");
-  const [ingredient, setIngredient] = useState("");
-  const [category, setCategory] = useState(ALL_CATEGORIES);
+  const [categoryId, setCategoryId] = useState("");
 
-  const allRecipes = useMemo(() => recipeRepository.getAll(), []);
+  const { categories } = useCategories();
+  const debouncedKeyword = useDebounce(keyword.trim(), 400);
 
-  const filteredRecipes = useMemo(
-    () =>
-      RecipeFilter.apply(allRecipes, { keyword, ingredient, category }),
-    [allRecipes, keyword, ingredient, category]
+  const { items, total, loading, error } = useRecipeList(
+    { q: debouncedKeyword, category: categoryId },
+    { limit: FEATURED_COUNT }
   );
-
-  const featuredRecipes = filteredRecipes.slice(0, FEATURED_COUNT);
 
   function handleReset() {
     setKeyword("");
-    setIngredient("");
-    setCategory(ALL_CATEGORIES);
+    setCategoryId("");
   }
 
   return (
@@ -61,17 +53,11 @@ function HomePage() {
         <h2>Tìm kiếm món ăn</h2>
 
         <input
-          type="text"
+          type="search"
           placeholder="Nhập tên món ăn..."
+          aria-label="Tìm theo tên món ăn"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Nhập nguyên liệu, ví dụ: thịt gà, trứng..."
-          value={ingredient}
-          onChange={(event) => setIngredient(event.target.value)}
         />
 
         <button type="button" onClick={handleReset}>
@@ -83,14 +69,22 @@ function HomePage() {
         <h2>Danh mục món ăn</h2>
 
         <div className="simple-category-list">
-          {CATEGORIES.map((item) => (
+          <button
+            type="button"
+            className={categoryId === "" ? "selected" : ""}
+            onClick={() => setCategoryId("")}
+          >
+            Tất cả
+          </button>
+
+          {categories.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              className={category === item ? "selected" : ""}
-              onClick={() => setCategory(item)}
+              className={categoryId === item.id ? "selected" : ""}
+              onClick={() => setCategoryId(item.id)}
             >
-              {item}
+              {item.name}
             </button>
           ))}
         </div>
@@ -105,34 +99,45 @@ function HomePage() {
           </Link>
         </div>
 
-        <p>
-          Hiển thị {featuredRecipes.length} / {filteredRecipes.length} công thức.
-        </p>
-
-        {filteredRecipes.length === 0 ? (
+        {loading ? (
+          <p>Đang tải công thức...</p>
+        ) : error ? (
           <div className="simple-empty">
-            <h3>Không tìm thấy món ăn</h3>
-
-            <p>Hãy thử tìm kiếm bằng tên món hoặc nguyên liệu khác.</p>
-
-            <button type="button" onClick={handleReset}>
-              Xóa bộ lọc
-            </button>
+            <h3>Không tải được công thức</h3>
+            <p>{error}</p>
           </div>
         ) : (
-          <div className="simple-recipe-list">
-            {featuredRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
-        )}
+          <>
+            <p>
+              Hiển thị {items.length} / {total} công thức.
+            </p>
 
-        {filteredRecipes.length > FEATURED_COUNT && (
-          <div className="load-more-wrap">
-            <Link to="/cong-dong" className="load-more-button">
-              Xem thêm {filteredRecipes.length - FEATURED_COUNT} công thức
-            </Link>
-          </div>
+            {items.length === 0 ? (
+              <div className="simple-empty">
+                <h3>Không tìm thấy món ăn</h3>
+
+                <p>Hãy thử tìm kiếm bằng tên món khác.</p>
+
+                <button type="button" onClick={handleReset}>
+                  Xóa bộ lọc
+                </button>
+              </div>
+            ) : (
+              <div className="simple-recipe-list">
+                {items.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            )}
+
+            {total > FEATURED_COUNT && (
+              <div className="load-more-wrap">
+                <Link to="/cong-dong" className="load-more-button">
+                  Xem thêm {total - FEATURED_COUNT} công thức
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

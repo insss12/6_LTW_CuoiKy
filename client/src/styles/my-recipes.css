@@ -1,0 +1,387 @@
+/* =================================
+   TRANG "CÔNG THỨC CỦA TÔI" VÀ FORM ĐĂNG/SỬA CÔNG THỨC
+   (nạp trước responsive.css để các media query ghi đè được)
+================================= */
+
+.my-recipes-page,
+.recipe-form-page {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ---------- Trang "Công thức của tôi" ---------- */
+
+.my-recipes-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 30px 25px;
+  background: #fff3e9;
+  border: 1px solid #f0d8c5;
+  border-radius: 8px;
+}
+
+.my-recipes-header h1 {
+  margin: 0 0 8px;
+  color: #c96c3c;
+  font-size: 28px;
+}
+
+.my-recipes-header p {
+  margin: 0;
+  color: #666666;
+  font-size: 15px;
+}
+
+.my-recipes-add {
+  display: inline-block;
+  padding: 11px 20px;
+  color: white;
+  background: #d8754a;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.my-recipes-add:hover {
+  background: #bd6038;
+}
+
+.my-recipes-search {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 22px 0;
+}
+
+.my-recipes-search input {
+  width: 320px;
+  max-width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.my-recipes-search input:focus {
+  outline: none;
+  border-color: #d8754a;
+}
+
+.my-recipes-search span {
+  color: #777777;
+  font-size: 14px;
+}
+
+.my-recipes-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.my-recipe-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #eadfd6;
+  border-radius: 8px;
+}
+
+.my-recipe-card img,
+.my-recipe-no-image {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.my-recipe-no-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #a65332;
+  background: #fff3e9;
+  font-size: 14px;
+}
+
+.my-recipe-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.my-recipe-info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.my-recipe-info p {
+  margin: 0;
+  color: #666666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.my-recipe-category {
+  align-self: flex-start;
+  padding: 3px 10px;
+  color: #a65332;
+  background: #fff3e9;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.my-recipe-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.edit-button,
+.delete-button {
+  flex: 1;
+  padding: 9px;
+  border-radius: 5px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.edit-button {
+  color: white;
+  background: #d8754a;
+  border: 1px solid #d8754a;
+}
+
+.edit-button:hover {
+  background: #bd6038;
+}
+
+.delete-button {
+  color: #b3261e;
+  background: white;
+  border: 1px solid #b3261e;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #fdeceb;
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.my-recipes-empty {
+  padding: 50px 20px;
+  text-align: center;
+  background: #fffaf6;
+  border: 1px dashed #f0d8c5;
+  border-radius: 8px;
+}
+
+.empty-icon {
+  font-size: 46px;
+}
+
+.my-recipes-empty h3 {
+  margin: 10px 0 8px;
+}
+
+.my-recipes-empty p {
+  margin: 0 0 18px;
+  color: #666666;
+}
+
+/* ---------- Form đăng / sửa công thức ---------- */
+
+.recipe-form-header {
+  margin-bottom: 20px;
+}
+
+.recipe-form-header > a {
+  color: #d8754a;
+  font-size: 14px;
+}
+
+.recipe-form-header h1 {
+  margin: 12px 0 6px;
+  color: #c96c3c;
+  font-size: 28px;
+}
+
+.recipe-form-header p {
+  margin: 0;
+  color: #666666;
+}
+
+.recipe-form {
+  padding: 25px;
+  background: white;
+  border: 1px solid #eadfd6;
+  border-radius: 8px;
+}
+
+.recipe-form h2 {
+  margin: 30px 0 5px;
+  padding-bottom: 8px;
+  color: #c96c3c;
+  border-bottom: 1px solid #f0d8c5;
+  font-size: 20px;
+}
+
+.recipe-form h2:first-child {
+  margin-top: 0;
+}
+
+.recipe-form-note {
+  margin: 8px 0 0;
+  color: #777777;
+  font-size: 14px;
+}
+
+.recipe-form .form-group textarea,
+.recipe-form .form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  background: white;
+  font-size: 14px;
+}
+
+.recipe-form .form-group textarea {
+  resize: vertical;
+}
+
+.recipe-form .form-group textarea:focus,
+.recipe-form .form-group select:focus {
+  outline: none;
+  border-color: #d8754a;
+}
+
+.recipe-form small {
+  display: block;
+  margin-top: 6px;
+  color: #888888;
+  font-size: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.dynamic-form-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #eadfd6;
+}
+
+.dynamic-form-row .form-group {
+  flex: 1;
+  min-width: 140px;
+  margin-top: 0;
+}
+
+.ingredient-row .form-message {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.step-form-row {
+  margin-top: 15px;
+  padding: 15px;
+  background: #fffaf6;
+  border: 1px solid #f0d8c5;
+  border-radius: 7px;
+}
+
+.step-form-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.step-form-heading button,
+.remove-row-button {
+  padding: 8px 14px;
+  color: #b3261e;
+  background: white;
+  border: 1px solid #b3261e;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.step-form-heading button:hover,
+.remove-row-button:hover {
+  background: #fdeceb;
+}
+
+.step-form-row textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.step-form-row textarea:focus {
+  outline: none;
+  border-color: #d8754a;
+}
+
+.add-row-button {
+  margin-top: 15px;
+  padding: 10px 16px;
+  color: #d8754a;
+  background: white;
+  border: 1px dashed #d8754a;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.add-row-button:hover {
+  background: #fff3e9;
+}
+
+.recipe-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #f0d8c5;
+}
+
+.cancel-button {
+  padding: 10px 18px;
+  color: #666666;
+  background: white;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.cancel-button:hover {
+  background: #f6f6f6;
+}
+
+.recipe-form-actions .save-recipe-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

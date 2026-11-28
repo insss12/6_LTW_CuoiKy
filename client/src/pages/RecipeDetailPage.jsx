@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Link,
     useLocation,
@@ -14,10 +14,11 @@ import StarRating from "../components/StarRating";
 import "../styles/detail.css";
 import "../styles/Community.css";
 
-import { recipeRepository } from "../utils/recipeStorage";
 import { RecipeFormatter } from "../utils/recipeHelpers";
-import { reviewRepository } from "../utils/recipeInteractions";
+import { ApiError, getErrorMessage } from "../services/api";
+import { fetchRecipe, STATUS_LABELS } from "../services/recipeApi";
 
+import useAuth from "../hooks/useAuth";
 import useRecipeViews from "../hooks/useRecipeViews";
 
 function RecipeDetailPage() {
@@ -25,34 +26,75 @@ function RecipeDetailPage() {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const { token, loading: authLoading } = useAuth();
 
-    // Lấy công thức
-    const recipe = useMemo(
-        () => recipeRepository.findById(id),
-        [id]
-    );
+    const [recipe, setRecipe] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    // Lượt xem được lưu trên Server
-    const {
-        views
-    } = useRecipeViews(
-        recipe ? id : "",
-        {
-            recordView: true
+    // Điểm trung bình: lấy từ công thức, sau đó được ReviewSection cập nhật
+    const [summary, setSummary] = useState({ average: 0, count: 0 });
+
+    // Lấy công thức từ server (đợi AuthContext khôi phục đăng nhập xong để
+    // chủ món/Admin xem được món chưa duyệt)
+    useEffect(() => {
+        if (authLoading) {
+            return;
         }
+
+        let active = true;
+
+        async function loadRecipe() {
+            setLoading(true);
+            setError("");
+
+            try {
+                const data = await fetchRecipe(id, token);
+
+                if (active) {
+                    setRecipe(data);
+                    setSummary({
+                        average: data.ratingAvg || 0,
+                        count: data.ratingCount || 0
+                    });
+                }
+            } catch (requestError) {
+                if (active) {
+                    setRecipe(null);
+                    setError(
+                        requestError instanceof ApiError && requestError.status === 404
+                            ? ""
+                            : getErrorMessage(requestError)
+                    );
+                }
+            } finally {
+                if (active) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        loadRecipe();
+
+        return () => {
+            active = false;
+        };
+    }, [id, token, authLoading]);
+
+    // Chỉ món đã duyệt mới có lượt xem, tim và đánh giá
+    const isApproved = recipe?.status === "approved";
+
+    const { views } = useRecipeViews(
+        isApproved ? recipe.id : "",
+        { recordView: true }
     );
 
-    // Phần đánh giá cũ, sẽ chuyển sang bình luận Server ở phần tiếp theo
-    const summary = useMemo(
-        () =>
-            recipe
-                ? reviewRepository.summary(recipe)
-                : {
-                    average: 0,
-                    count: 0
-                },
-        [recipe]
-    );
+    const handleSummary = useCallback((next) => {
+        setSummary({
+            average: next.average || 0,
+            count: next.count || 0
+        });
+    }, []);
 
     function handleBack() {
         if (location.key !== "default") {
@@ -61,6 +103,28 @@ function RecipeDetailPage() {
         }
 
         navigate("/");
+    }
+
+    if (loading || authLoading) {
+        return (
+            <div className="not-found">
+                <p>Đang tải công thức...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="not-found">
+                <h2>Không tải được công thức</h2>
+
+                <p>{error}</p>
+
+                <Link to="/" className="header-button">
+                    Quay về trang chủ
+                </Link>
+            </div>
+        );
     }
 
     if (!recipe) {
@@ -94,6 +158,15 @@ function RecipeDetailPage() {
                     ← Quay lại
                 </button>
 
+                {!isApproved && (
+                    <p className="form-message" role="status">
+                        Trạng thái: {STATUS_LABELS[recipe.status] || recipe.status}.
+                        {recipe.status === "rejected" && recipe.rejectionReason
+                            ? ` Lý do: ${recipe.rejectionReason}`
+                            : " Công thức chỉ hiển thị công khai sau khi được Admin duyệt."}
+                    </p>
+                )}
+
                 <div className="detail-hero">
 
                     <RecipeImage
@@ -120,7 +193,7 @@ function RecipeDetailPage() {
                                     />
 
                                     <span>
-                                        {summary.average}
+                                        {Number(summary.average).toFixed(1)}
                                     </span>
 
                                     <span>
@@ -133,18 +206,22 @@ function RecipeDetailPage() {
                                 </span>
                             )}
 
-                            <span>
-                                👁 {views.toLocaleString("vi-VN")} lượt xem
-                            </span>
+                            {isApproved && (
+                                <span>
+                                    👁 {views.toLocaleString("vi-VN")} lượt xem
+                                </span>
+                            )}
 
                         </div>
 
-                        <div className="detail-actions">
-                            <FavoriteButton
-                                recipeId={recipe.id}
-                                variant="detail"
-                            />
-                        </div>
+                        {isApproved && (
+                            <div className="detail-actions">
+                                <FavoriteButton
+                                    recipeId={recipe.id}
+                                    variant="detail"
+                                />
+                            </div>
+                        )}
 
                         <div className="detail-meta">
 
@@ -271,9 +348,12 @@ function RecipeDetailPage() {
 
                 </div>
 
-                <ReviewSection
-                    recipe={recipe}
-                />
+                {isApproved && (
+                    <ReviewSection
+                        recipe={recipe}
+                        onSummary={handleSummary}
+                    />
+                )}
 
                 <div className="detail-bottom">
                     Chúc bạn có một bữa ăn thật ngon! ♡
