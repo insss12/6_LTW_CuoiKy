@@ -26,6 +26,31 @@ export const protect = asyncHandler(async (req, res, next) => {
   next();
 });
 
+// Đăng nhập không bắt buộc: có token hợp lệ thì gắn req.user, không thì coi là khách.
+// Dùng cho API công khai nhưng kết quả phụ thuộc người xem (ví dụ xem công thức chưa duyệt).
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+  const [scheme, token] = (req.headers.authorization || '').split(' ');
+
+  if (scheme === 'Bearer' && token) {
+    let decoded = null;
+
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      // Token sai hoặc hết hạn: xem như khách, không báo lỗi ở API công khai
+    }
+
+    if (decoded?.id) {
+      const user = await User.findById(decoded.id);
+      if (user) {
+        req.user = user;
+      }
+    }
+  }
+
+  next();
+});
+
 // Giới hạn theo vai trò, dùng SAU protect. Ví dụ: requireRole('admin')
 export const requireRole = (...roles) => (req, res, next) => {
   if (!req.user) {

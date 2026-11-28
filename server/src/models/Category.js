@@ -9,6 +9,16 @@ const categorySchema = new mongoose.Schema(
       trim: true
     },
 
+    // Dạng không dấu, dùng cho URL/lọc (ví dụ "Món chính" -> "mon-chinh").
+    // Database dùng chung đã có index unique trên slug nên trường này phải có giá trị.
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true
+    },
+
     description: {
       type: String,
       default: ""
