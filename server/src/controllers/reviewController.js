@@ -1,29 +1,21 @@
-
 import mongoose from "mongoose";
 
 import Review from "../models/Review.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { resolveRecipe } from "../utils/recipeRef.js";
 
-// Kiểm tra mã công thức
-function validateRecipeKey(value) {
-    if (
-        typeof value !== "string" ||
-        value.trim().length < 1 ||
-        value.trim().length > 120 ||
-        !/^[a-zA-Z0-9_-]+$/.test(value.trim())
-    ) {
-        throw ApiError.badRequest("Mã công thức không hợp lệ");
-    }
-
-    return value.trim();
-}
-
-// Chuyển dữ liệu Review thành JSON an toàn
+// Chuyển dữ liệu Review thành JSON an toàn.
+// review.recipe cần được populate("recipe", "legacyKey title") để có recipeKey/recipeTitle.
 function formatReview(review) {
+    const recipeId = String(review.recipe?._id || review.recipe);
+
     return {
         id: String(review._id),
-        recipeKey: review.recipeKey,
+        recipeId,
+        // Giữ "mau-1" cho món mẫu để client cũ vẫn khớp được
+        recipeKey: review.recipe?.legacyKey || recipeId,
+        recipeTitle: review.recipe?.title || "",
         userId: String(review.user?._id || review.user),
         userName: review.user?.name || "Thành viên Bếp Nhà",
         rating: review.rating,
@@ -37,10 +29,10 @@ function formatReview(review) {
 // GET /api/reviews/:recipeKey
 // Chỉ lấy nhận xét đã được Admin duyệt
 export const getPublicReviews = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey);
 
     const reviews = await Review.find({
-        recipeKey,
+        recipe: recipe._id,
         status: "approved"
     })
         .populate("user", "name")
@@ -58,9 +50,13 @@ export const getPublicReviews = asyncHandler(async (req, res) => {
         ? Math.round((totalRating / count) * 10) / 10
         : 0;
 
+    // Các review này thuộc cùng một công thức nên gắn thông tin công thức thủ công,
+    // không cần populate thêm
     res.status(200).json({
         success: true,
-        items: reviews.map(formatReview),
+        items: reviews.map((review) =>
+            formatReview({ ...review, recipe })
+        ),
         summary: {
             count,
             average
@@ -71,23 +67,23 @@ export const getPublicReviews = asyncHandler(async (req, res) => {
 // GET /api/reviews/:recipeKey/mine
 // Lấy nhận xét của tài khoản đang đăng nhập
 export const getMyReview = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey);
 
     const review = await Review.findOne({
-        recipeKey,
+        recipe: recipe._id,
         user: req.user._id
     }).populate("user", "name");
 
     res.status(200).json({
         success: true,
-        review: review ? formatReview(review) : null
+        review: review ? formatReview({ ...review.toObject(), recipe }) : null
     });
 });
 
 // POST /api/reviews/:recipeKey
 // Tạo hoặc cập nhật nhận xét
 export const saveReview = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey);
 
     const rating = Number(req.body.rating);
     const comment =
@@ -105,12 +101,12 @@ export const saveReview = asyncHandler(async (req, res) => {
         );
     }
 
-    // Tài khoản chỉ có một nhận xét cho mỗi công thức.
+    // Tài khoản chỉ có một nhận xét cho mỗi công thức (unique index user + recipe).
     // Khi sửa, trạng thái sẽ quay về pending để Admin duyệt lại.
     const review = await Review.findOneAndUpdate(
         {
             user: req.user._id,
-            recipeKey
+            recipe: recipe._id
         },
         {
             $set: {
@@ -119,14 +115,10 @@ export const saveReview = asyncHandler(async (req, res) => {
                 status: "pending",
                 moderatedBy: null,
                 moderatedAt: null
-            },
-            $setOnInsert: {
-                user: req.user._id,
-                recipeKey
             }
         },
         {
-            new: true,
+            returnDocument: "after",
             upsert: true,
             runValidators: true,
             setDefaultsOnInsert: true
@@ -136,17 +128,20 @@ export const saveReview = asyncHandler(async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Nhận xét đã gửi và đang chờ Admin kiểm duyệt",
-        review: formatReview(review)
+        review: formatReview({ ...review.toObject(), recipe })
     });
 });
 
 // DELETE /api/reviews/:recipeKey
 // Người dùng chỉ được xóa nhận xét của chính mình
+// (công thức có thể đã bị ẩn, nên không bắt buộc đã duyệt)
 export const deleteMyReview = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey, {
+        onlyApproved: false
+    });
 
     const result = await Review.deleteOne({
-        recipeKey,
+        recipe: recipe._id,
         user: req.user._id
     });
 
@@ -182,6 +177,7 @@ export const getAdminReviews = asyncHandler(async (req, res) => {
     const [reviews, total] = await Promise.all([
         Review.find(filter)
             .populate("user", "name email")
+            .populate("recipe", "legacyKey title")
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
@@ -209,22 +205,30 @@ function validateReviewId(id) {
     }
 }
 
-// PATCH /api/admin/reviews/:id/approve
-export const approveReview = asyncHandler(async (req, res) => {
+// Đổi trạng thái kiểm duyệt của một nhận xét
+async function moderateReview(req, status) {
     validateReviewId(req.params.id);
 
     const review = await Review.findById(req.params.id)
-        .populate("user", "name");
+        .populate("user", "name")
+        .populate("recipe", "legacyKey title");
 
     if (!review) {
         throw ApiError.notFound("Không tìm thấy nhận xét");
     }
 
-    review.status = "approved";
+    review.status = status;
     review.moderatedBy = req.user._id;
     review.moderatedAt = new Date();
 
     await review.save();
+
+    return review;
+}
+
+// PATCH /api/admin/reviews/:id/approve
+export const approveReview = asyncHandler(async (req, res) => {
+    const review = await moderateReview(req, "approved");
 
     res.status(200).json({
         success: true,
@@ -235,20 +239,7 @@ export const approveReview = asyncHandler(async (req, res) => {
 
 // PATCH /api/admin/reviews/:id/hide
 export const hideReview = asyncHandler(async (req, res) => {
-    validateReviewId(req.params.id);
-
-    const review = await Review.findById(req.params.id)
-        .populate("user", "name");
-
-    if (!review) {
-        throw ApiError.notFound("Không tìm thấy nhận xét");
-    }
-
-    review.status = "hidden";
-    review.moderatedBy = req.user._id;
-    review.moderatedAt = new Date();
-
-    await review.save();
+    const review = await moderateReview(req, "hidden");
 
     res.status(200).json({
         success: true,
@@ -272,4 +263,3 @@ export const deleteReviewByAdmin = asyncHandler(async (req, res) => {
         message: "Đã xóa nhận xét"
     });
 });
-    

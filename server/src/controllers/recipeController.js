@@ -1,5 +1,9 @@
 import Category from "../models/Category.js";
+import Favorite from "../models/Favorite.js";
 import Recipe from "../models/Recipe.js";
+import RecipeMetric from "../models/RecipeMetric.js";
+import RecipeView from "../models/RecipeView.js";
+import Review from "../models/Review.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { escapeRegex, normalizeText } from "../utils/text.js";
@@ -292,6 +296,14 @@ export const deleteRecipe = asyncHandler(async (req, res) => {
   }
 
   await recipe.deleteOne();
+
+  // Xóa dữ liệu gắn với công thức này để không để lại bản ghi mồ côi
+  await Promise.all([
+    Favorite.deleteMany({ recipe: recipe._id }),
+    Review.deleteMany({ recipe: recipe._id }),
+    RecipeView.deleteMany({ recipe: recipe._id }),
+    RecipeMetric.deleteMany({ recipe: recipe._id })
+  ]);
 
   res.status(200).json({ success: true, message: "Đã xóa công thức" });
 });

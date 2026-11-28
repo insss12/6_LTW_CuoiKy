@@ -6,7 +6,7 @@ import cors from "cors";
 import healthRoutes from "./routes/healthRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import viewRoutes from "./routes/viewRoutes.js";
-import likeRoutes from "./routes/likeRoutes.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import adminReviewRoutes from "./routes/adminReviewRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
@@ -42,7 +42,9 @@ app.use("/api/auth", authRoutes);
 // API lượt xem
 app.use("/api/views", viewRoutes);
 
-app.use("/api/likes", likeRoutes);
+app.use("/api/favorites", favoriteRoutes);
+// Đường dẫn cũ, tạm giữ cho client hiện tại (xóa khi client chuyển sang /api/favorites)
+app.use("/api/likes", favoriteRoutes);
 
 app.use("/api/reviews", reviewRoutes);
 

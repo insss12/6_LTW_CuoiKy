@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const recipeMetricSchema = new mongoose.Schema(
     {
-        recipeKey: {
-            type: String,
+        recipe: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Recipe",
             required: true,
-            trim: true,
             unique: true
         },
 
@@ -20,9 +20,6 @@ const recipeMetricSchema = new mongoose.Schema(
     }
 );
 
-const RecipeMetric = mongoose.model(
-    "RecipeMetric",
-    recipeMetricSchema
-);
+const RecipeMetric = mongoose.model("RecipeMetric", recipeMetricSchema);
 
-export default RecipeMetric;    
+export default RecipeMetric;
