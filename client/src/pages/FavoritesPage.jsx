@@ -10,8 +10,8 @@ import { Link } from "react-router-dom";
 import RecipeCard from "../components/RecipeCard";
 import useAuth from "../hooks/useAuth";
 
-import { apiRequest } from "../services/api";
-import { recipeRepository } from "../utils/recipeStorage";
+import { apiRequest, getErrorMessage } from "../services/api";
+import { fetchRecipe } from "../services/recipeApi";
 
 function FavoritesPage() {
     const { user, token } = useAuth();
@@ -20,12 +20,9 @@ function FavoritesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const allRecipes = useMemo(
-        () => recipeRepository.getAll(),
-        []
-    );
+    const [recipes, setRecipes] = useState([]);
 
-    // Lấy danh sách đã thích từ MongoDB
+    // Lấy danh sách đã thích từ MongoDB, rồi lấy thông tin từng công thức
     useEffect(() => {
         let active = true;
 
@@ -35,17 +32,28 @@ function FavoritesPage() {
 
             try {
                 const result = await apiRequest(
-                    "/likes/mine",
+                    "/favorites/mine",
                     { token }
                 );
 
+                const ids = result.items || [];
+
+                const settled = await Promise.allSettled(
+                    ids.map((recipeId) => fetchRecipe(recipeId, token))
+                );
+
                 if (active) {
-                    setFavoriteIds(result.items || []);
+                    setFavoriteIds(ids);
+                    setRecipes(
+                        settled
+                            .filter((item) => item.status === "fulfilled")
+                            .map((item) => item.value)
+                    );
                 }
             } catch (requestError) {
                 if (active) {
                     setError(
-                        requestError.message ||
+                        getErrorMessage(requestError) ||
                         "Không tải được danh sách yêu thích."
                     );
                 }
@@ -60,6 +68,7 @@ function FavoritesPage() {
             loadFavorites();
         } else {
             setFavoriteIds([]);
+            setRecipes([]);
             setLoading(false);
         }
 
@@ -68,15 +77,14 @@ function FavoritesPage() {
         };
     }, [user, token]);
 
-    const favorites = useMemo(() => {
-        return favoriteIds
-            .map((id) =>
-                allRecipes.find(
-                    (recipe) => recipe.id === id
-                )
-            )
-            .filter(Boolean);
-    }, [favoriteIds, allRecipes]);
+    // Giữ đúng thứ tự "mới thích nhất trước" của server
+    const favorites = useMemo(
+        () =>
+            favoriteIds
+                .map((id) => recipes.find((recipe) => recipe.id === id))
+                .filter(Boolean),
+        [favoriteIds, recipes]
+    );
 
     function handleFavoriteChange(recipeId, liked) {
         if (!liked) {

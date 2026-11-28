@@ -18,7 +18,7 @@ function formatDate(value) {
     return date.toLocaleDateString("vi-VN");
 }
 
-function ReviewSection({ recipe, onChanged }) {
+function ReviewSection({ recipe, onChanged, onSummary }) {
     const { user, token } = useAuth();
     const location = useLocation();
 
@@ -86,6 +86,13 @@ function ReviewSection({ recipe, onChanged }) {
     useEffect(() => {
         loadReviews();
     }, [loadReviews]);
+
+    // Báo điểm trung bình lên trang chi tiết để hai nơi luôn khớp nhau
+    useEffect(() => {
+        if (!loading && onSummary) {
+            onSummary(summary);
+        }
+    }, [loading, summary, onSummary]);
 
     // Gửi hoặc cập nhật nhận xét
     async function handleSubmit(event) {

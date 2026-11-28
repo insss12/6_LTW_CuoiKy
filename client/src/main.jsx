@@ -13,6 +13,7 @@ import "./styles/home.css";
 import "./styles/auth.css";
 import "./styles/recipes.css";
 import "./styles/detail.css";
+import "./styles/my-recipes.css";
 import "./styles/responsive.css";
 
 // CSS cộng đồng và quản trị

@@ -1,13 +1,57 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
-import { recipeRepository } from "../utils/recipeStorage";
+import useAuth from "../hooks/useAuth";
+import { getErrorMessage } from "../services/api";
+import {
+  deleteRecipe,
+  fetchMyRecipes,
+  STATUS_LABELS
+} from "../services/recipeApi";
 
 function MyRecipesPage() {
-  const [recipes, setRecipes] = useState(() => recipeRepository.getMine());
-  const [keyword, setKeyword] = useState("");
+  const { token } = useAuth();
+  const location = useLocation();
 
-  function handleDelete(id) {
+  const [recipes, setRecipes] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState(location.state?.message || "");
+  const [deletingId, setDeletingId] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadRecipes() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await fetchMyRecipes(token, { limit: 50 });
+
+        if (active) {
+          setRecipes(data.items);
+        }
+      } catch (requestError) {
+        if (active) {
+          setError(getErrorMessage(requestError));
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadRecipes();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  async function handleDelete(id) {
     const confirmed = window.confirm(
       "Bạn có chắc chắn muốn xóa công thức này không?"
     );
@@ -16,15 +60,27 @@ function MyRecipesPage() {
       return;
     }
 
-    const updatedRecipes = recipes.filter((recipe) => recipe.id !== id);
+    setDeletingId(id);
+    setMessage("");
 
-    recipeRepository.saveMine(updatedRecipes);
-    setRecipes(updatedRecipes);
+    try {
+      await deleteRecipe(token, id);
+
+      setRecipes((current) => current.filter((recipe) => recipe.id !== id));
+    } catch (requestError) {
+      setMessage(getErrorMessage(requestError));
+    } finally {
+      setDeletingId("");
+    }
   }
 
-  const filteredRecipes = recipes.filter((recipe) =>
-    recipe.title.toLowerCase().includes(keyword.toLowerCase())
-  );
+  const filteredRecipes = useMemo(() => {
+    const text = keyword.trim().toLowerCase();
+
+    return recipes.filter((recipe) =>
+      recipe.title.toLowerCase().includes(text)
+    );
+  }, [recipes, keyword]);
 
   return (
     <div className="my-recipes-page">
@@ -41,8 +97,9 @@ function MyRecipesPage() {
 
       <div className="my-recipes-search">
         <input
-          type="text"
+          type="search"
           placeholder="Tìm công thức của bạn..."
+          aria-label="Tìm công thức của bạn"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
         />
@@ -50,7 +107,16 @@ function MyRecipesPage() {
         <span>{filteredRecipes.length} công thức</span>
       </div>
 
-      {filteredRecipes.length === 0 ? (
+      {message && <p className="form-message">{message}</p>}
+
+      {loading ? (
+        <p>Đang tải công thức của bạn...</p>
+      ) : error ? (
+        <div className="my-recipes-empty">
+          <h3>Không tải được công thức</h3>
+          <p>{error}</p>
+        </div>
+      ) : filteredRecipes.length === 0 ? (
         <div className="my-recipes-empty">
           <div className="empty-icon">🍳</div>
 
@@ -95,6 +161,15 @@ function MyRecipesPage() {
                   </Link>
                 </h3>
 
+                <p>
+                  <strong>
+                    {STATUS_LABELS[recipe.status] || recipe.status}
+                  </strong>
+                  {recipe.status === "rejected" && recipe.rejectionReason
+                    ? ` – ${recipe.rejectionReason}`
+                    : ""}
+                </p>
+
                 <p>{recipe.description}</p>
 
                 <p>Thời gian: {recipe.time} phút</p>
@@ -118,8 +193,9 @@ function MyRecipesPage() {
                     type="button"
                     className="delete-button"
                     onClick={() => handleDelete(recipe.id)}
+                    disabled={deletingId === recipe.id}
                   >
-                    Xóa
+                    {deletingId === recipe.id ? "Đang xóa..." : "Xóa"}
                   </button>
                 </div>
               </div>
