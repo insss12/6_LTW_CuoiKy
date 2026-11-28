@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
 const recipeViewSchema = new mongoose.Schema({
-    recipeKey: {
-        type: String,
-        required: true,
-        trim: true
+    recipe: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Recipe",
+        required: true
     },
 
     visitorId: {
@@ -26,19 +26,10 @@ const recipeViewSchema = new mongoose.Schema({
 
 // Mỗi người dùng trong một phiên chỉ được tính một lần
 recipeViewSchema.index(
-    {
-        recipeKey: 1,
-        visitorId: 1,
-        sessionId: 1
-    },
-    {
-        unique: true
-    }
+    { recipe: 1, visitorId: 1, sessionId: 1 },
+    { unique: true }
 );
 
-const RecipeView = mongoose.model(
-    "RecipeView",
-    recipeViewSchema
-);
+const RecipeView = mongoose.model("RecipeView", recipeViewSchema);
 
 export default RecipeView;

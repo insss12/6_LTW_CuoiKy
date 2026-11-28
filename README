@@ -1,5 +1,95 @@
-1. Những phần mềm cần cài: Node.js, npm, Git, VS Code.
-2. cd đến file client/server và: npm install
-3. truy cập thư mục client "cd client" và "npm run dev" để chạy.
-4. cài mongoDB
-5.cd server cài :npm install bcryptjs jsonwebtoken
+# Bếp Nhà – Sổ tay công thức nấu ăn (Đề 3, Lập trình Web)
+
+Ứng dụng web full-stack: React (Vite) + Node.js/Express + MongoDB.
+
+## Cần cài trước
+Node.js, npm, Git, VS Code và MongoDB (cài trên máy hoặc dùng MongoDB Atlas).
+
+## Cài đặt và chạy
+
+### 1. Server
+```
+cd server
+npm install
+```
+Tạo file `.env` từ file mẫu rồi sửa lại `MONGODB_URI` và `JWT_SECRET`:
+```
+copy .env.example .env        (Windows)
+cp .env.example .env          (macOS/Linux)
+```
+Nạp dữ liệu ban đầu (loại món, tài khoản demo, 8 công thức mẫu), sau đó chạy server:
+```
+npm run seed
+npm run dev
+```
+Server chạy tại http://localhost:5000 (kiểm tra: http://localhost:5000/api/health).
+
+### 2. Client
+```
+cd client
+npm install
+npm run dev
+```
+Client chạy tại http://localhost:5173.
+
+## Tài khoản demo
+Được tạo bởi `npm run seed`:
+
+| Vai trò | Email | Mật khẩu |
+|---|---|---|
+| Admin | admin@bepnha.com | Admin@123 |
+| Thành viên | member@bepnha.com | Member@123 |
+| Khách | không cần đăng nhập | |
+
+## Các lệnh của server
+| Lệnh | Tác dụng |
+|---|---|
+| `npm run seed` | Thêm những dữ liệu còn thiếu. Chạy nhiều lần vẫn an toàn, không ghi đè bản đã chỉnh sửa |
+| `npm run seed -- --reset` | Xóa và nạp lại 8 công thức mẫu (không đụng tới món do người dùng đăng) |
+| `node src/scripts/createAdmin.js <email> <mật khẩu> [tên]` | Tạo hoặc nâng một tài khoản lên Admin |
+
+## API công thức (đã có)
+| Method | URL | Ai gọi được | Ghi chú |
+|---|---|---|---|
+| GET | /api/recipes | Khách | Chỉ món đã duyệt. Tham số: `q`, `category`, `difficulty`, `maxTime`, `sort`, `page`, `limit` |
+| GET | /api/recipes/:id | Khách | Món chưa duyệt chỉ chủ sở hữu/Admin xem được |
+| GET | /api/recipes/mine | Thành viên | Công thức của mình, mọi trạng thái |
+| POST | /api/recipes | Thành viên | Thành viên đăng thì chờ duyệt, Admin đăng thì hiện luôn |
+| PUT | /api/recipes/:id | Chủ sở hữu, Admin | Thành viên sửa xong phải được duyệt lại |
+| DELETE | /api/recipes/:id | Chủ sở hữu, Admin | |
+| GET | /api/categories | Khách | Danh sách loại món |
+| GET | /api/admin/recipes?status= | Admin | `pending` (mặc định), `approved`, `rejected` |
+| PATCH | /api/admin/recipes/:id/approve | Admin | Duyệt |
+| PATCH | /api/admin/recipes/:id/reject | Admin | Từ chối, body: `{ "reason": "..." }` |
+
+## Yêu thích, đánh giá, lượt xem
+`:recipeKey` nhận **`_id` của công thức** hoặc mã cũ của món mẫu (ví dụ `mau-1`). Chỉ công thức đã được duyệt mới có thể thích, đánh giá, đếm lượt xem.
+
+| Method | URL | Ai gọi được | Ghi chú |
+|---|---|---|---|
+| GET | /api/favorites/mine | Thành viên | Danh sách món đã thích, mới nhất trước |
+| GET | /api/favorites/:recipeKey | Khách | Số lượt thích |
+| GET | /api/favorites/:recipeKey/me | Thành viên | Mình đã thích chưa |
+| PUT | /api/favorites/:recipeKey | Thành viên | Thích (201 nếu mới, 200 nếu đã thích) |
+| DELETE | /api/favorites/:recipeKey | Thành viên | Bỏ thích |
+| GET | /api/reviews/:recipeKey | Khách | Chỉ nhận xét đã duyệt, kèm điểm trung bình |
+| GET | /api/reviews/:recipeKey/mine | Thành viên | Nhận xét của mình |
+| POST | /api/reviews/:recipeKey | Thành viên | Mỗi người 1 nhận xét/món, gửi lại thì cập nhật và chờ duyệt lại |
+| DELETE | /api/reviews/:recipeKey | Thành viên | Xóa nhận xét của mình |
+| GET | /api/admin/reviews?status= | Admin | `pending` (mặc định), `approved`, `hidden` |
+| PATCH | /api/admin/reviews/:id/approve | Admin | Duyệt |
+| PATCH | /api/admin/reviews/:id/hide | Admin | Ẩn |
+| DELETE | /api/admin/reviews/:id | Admin | Xóa |
+| GET | /api/views/:recipeKey | Khách | Số lượt xem |
+| POST | /api/views/:recipeKey | Khách | Ghi nhận lượt xem, body `{ visitorId, sessionId }` |
+
+`/api/likes/...` là đường dẫn cũ của `/api/favorites/...`, tạm giữ cho client hiện tại.
+
+## Chuyển dữ liệu cũ (chỉ cần nếu database đã có review/tim/lượt xem từ phiên bản trước)
+Phiên bản cũ gắn review, tim và lượt xem với công thức bằng mã chuỗi (`recipeKey`). Phiên bản mới dùng tham chiếu `recipe` tới `_id` công thức. **Tắt server, rồi chạy theo thứ tự:**
+```
+npm run seed
+npm run migrate:refs -- --dry-run     (chạy thử, chỉ báo cáo, không ghi gì)
+npm run migrate:refs                  (chạy thật)
+```
+Script tự sao lưu trước khi sửa sang các collection `*_backup_step4`. Dữ liệu gắn với công thức không có trong database (ví dụ món chỉ lưu ở localStorage) không nối được nên bị gỡ khỏi collection chính, nhưng vẫn còn trong backup.

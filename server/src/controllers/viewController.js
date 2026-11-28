@@ -3,33 +3,20 @@ import RecipeView from "../models/RecipeView.js";
 
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-
-// Kiểm tra mã công thức
-function validateRecipeKey(recipeKey) {
-    if (
-        typeof recipeKey !== "string" ||
-        recipeKey.trim().length < 1 ||
-        recipeKey.trim().length > 120 ||
-        !/^[a-zA-Z0-9_-]+$/.test(recipeKey.trim())
-    ) {
-        throw ApiError.badRequest("Mã công thức không hợp lệ");
-    }
-
-    return recipeKey.trim();
-}
+import { recipeKeyOf, resolveRecipe } from "../utils/recipeRef.js";
 
 // GET /api/views/:recipeKey
 // Lấy số lượt xem
 export const getRecipeViews = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey);
 
     const metric = await RecipeMetric.findOne({
-        recipeKey
+        recipe: recipe._id
     }).lean();
 
     res.status(200).json({
         success: true,
-        recipeKey,
+        recipeKey: recipeKeyOf(recipe),
         viewCount: metric?.viewCount || 0
     });
 });
@@ -37,7 +24,7 @@ export const getRecipeViews = asyncHandler(async (req, res) => {
 // POST /api/views/:recipeKey
 // Ghi nhận một lượt xem
 export const recordRecipeView = asyncHandler(async (req, res) => {
-    const recipeKey = validateRecipeKey(req.params.recipeKey);
+    const recipe = await resolveRecipe(req.params.recipeKey);
 
     const { visitorId, sessionId } = req.body || {};
 
@@ -59,7 +46,7 @@ export const recordRecipeView = asyncHandler(async (req, res) => {
     try {
         // Thử tạo bản ghi lượt xem
         newView = await RecipeView.create({
-            recipeKey,
+            recipe: recipe._id,
             visitorId,
             sessionId
         });
@@ -74,18 +61,9 @@ export const recordRecipeView = asyncHandler(async (req, res) => {
     if (newView) {
         try {
             await RecipeMetric.updateOne(
-                { recipeKey },
-                {
-                    $setOnInsert: {
-                        recipeKey
-                    },
-                    $inc: {
-                        viewCount: 1
-                    }
-                },
-                {
-                    upsert: true
-                }
+                { recipe: recipe._id },
+                { $inc: { viewCount: 1 } },
+                { upsert: true }
             );
         } catch (error) {
             // Nếu tăng bộ đếm thất bại, xóa bản ghi
@@ -99,7 +77,7 @@ export const recordRecipeView = asyncHandler(async (req, res) => {
     }
 
     const metric = await RecipeMetric.findOne({
-        recipeKey
+        recipe: recipe._id
     }).lean();
 
     res.status(200).json({
